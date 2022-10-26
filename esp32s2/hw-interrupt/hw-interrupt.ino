@@ -61,7 +61,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   while (!Serial);
-  Serial.println("Starting Timer Demo"); 
+  Serial.println("Starting HW Interrupt Demo"); 
 
   xTaskCreatePinnedToCore(
     readSerial,     // Function to be called
