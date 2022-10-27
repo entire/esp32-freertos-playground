@@ -59,28 +59,21 @@
  
 #include "ST25DVSensor.h"
 
+// Use only 1 core on ESP32
+#if CONFIG_FREERTOS_UNICORE
+static const BaseType_t app_cpu = 0;
+#else
+static const BaseType_t app_cpu = 1;
+#endif
+
 #define SerialPort      Serial
 
-#if defined(ARDUINO_B_L4S5I_IOT01A)
-// Pin definitions for board B-L4S5I_IOT01A
-#define GPO_PIN PE4
-#define LPD_PIN PE2
-#define SDA_PIN PB11
-#define SCL_PIN PB10
-
-#define WireNFC MyWire
-TwoWire MyWire(SDA_PIN, SCL_PIN);
-
-#else
-// Please define the pin and wire instance used for your board
-// #define GPO_PIN PE4
-// #define LPD_PIN PE2
-// #define SDA_PIN PB11
-// #define SCL_PIN PB10
+#define GPO_PIN T1
+#define LPD_PIN T2
+#define SDA_PIN SDA
+#define SCL_PIN SCL
 
 #define WireNFC Wire // Default wire instance
-
-#endif
 
 #if !defined(GPO_PIN) || !defined(LPD_PIN)
 #error define the pin and wire instance used for your board
@@ -88,13 +81,16 @@ TwoWire MyWire(SDA_PIN, SCL_PIN);
 
 
 void setup() {
-  const char uri_write_message[] = "st.com/st25";       // Uri message to write in the tag
+  const char uri_write_message[] = "twitter.com/faust_pay";       // Uri message to write in the tag
   const char uri_write_protocol[] = URI_ID_0x01_STRING; // Uri protocol to write in the tag
   String uri_write = String(uri_write_protocol) + String(uri_write_message);
   String uri_read;
 
   // Initialize serial for output.
   SerialPort.begin(115200);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  while (!SerialPort);
+  SerialPort.println("Starting ST25DV Hello World Demo"); 
 
   // The wire instance used can be omited in case you use default Wire instance
   if(st25dv.begin(GPO_PIN, LPD_PIN, &WireNFC) == 0) {
@@ -108,8 +104,6 @@ void setup() {
     SerialPort.println("Write failed!");
     while(1);
   }
-
-  delay(100);
   
   if(st25dv.readURI(&uri_read)) {
     SerialPort.println("Read failed!");
